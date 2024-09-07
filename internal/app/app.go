@@ -4,15 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	userdelivery "github.com/smakasaki/typing-trainer/internal/user/delivery"
-	userrepo "github.com/smakasaki/typing-trainer/internal/user/repository"
-	useruc "github.com/smakasaki/typing-trainer/internal/user/usecase"
+	"github.com/smakasaki/shortener/internal/user"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -29,13 +26,11 @@ func New() (*App, error) {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "production"
-		log.Println("APP_ENV environment variable not set, defaulting to production")
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
-		log.Println("PORT environment variable not set, defaulting to 8080")
 	}
 
 	dbURL := os.Getenv("DATABASE_URL")
@@ -43,14 +38,15 @@ func New() (*App, error) {
 		return nil, fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 
-	dbConn, err := connectDB(dbURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %v", err)
-	}
-
 	logger, err := newLogger(env)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize logger: %v", err)
+	}
+
+	dbConn, err := connectDB(dbURL, logger)
+	if err != nil {
+		logger.Error("Failed to connect to database", zap.Error(err))
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
 	e := echo.New()
@@ -81,6 +77,7 @@ func New() (*App, error) {
 		Env:    env,
 	}
 
+	logger.Info("App initialized", zap.String("env", env), zap.String("port", port))
 	return app, nil
 }
 
@@ -93,12 +90,17 @@ func newLogger(env string) (*zap.Logger, error) {
 		cfg = zap.NewProductionConfig()
 	}
 
-	return cfg.Build()
+	logger, err := cfg.Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build logger: %w", err)
+	}
+	return logger, nil
 }
 
-func connectDB(url string) (*sql.DB, error) {
+func connectDB(url string, logger *zap.Logger) (*sql.DB, error) {
 	db, err := sql.Open("postgres", url)
 	if err != nil {
+		logger.Error("Unable to open database connection", zap.Error(err))
 		return nil, fmt.Errorf("unable to open database connection: %v", err)
 	}
 
@@ -107,19 +109,21 @@ func connectDB(url string) (*sql.DB, error) {
 
 	err = db.PingContext(ctx)
 	if err != nil {
+		logger.Error("Unable to connect to database", zap.Error(err))
 		return nil, fmt.Errorf("unable to connect to database: %v", err)
 	}
 
-	log.Println("Successfully connected to the database")
+	logger.Info("Successfully connected to the database")
 	return db, nil
 }
 
 func (a *App) Run() error {
 	a.Logger.Info("Starting server", zap.String("port", a.Port), zap.String("env", a.Env))
 
-	userRepo := userrepo.NewUserRepository(a.DB)
-	userUseCase := useruc.NewUserUseCase(userRepo)
-	userdelivery.RegisterEndpoints(a.Echo, userUseCase)
+	// Initialize user module
+	userRepo := user.NewRepository(a.DB)
+	userUseCase := user.NewUseCase(userRepo)
+	user.RegisterEndpoints(a.Echo, userUseCase)
 
 	a.Echo.GET("/", func(c echo.Context) error {
 		return c.String(200, "Hello, World!")
