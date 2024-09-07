@@ -26,9 +26,7 @@ func (r *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.Email,
-		&user.Password,
 		&user.CreatedAt,
-		&user.UpdatedAt,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {

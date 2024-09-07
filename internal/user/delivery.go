@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/smakasaki/shortener/pkg/validation"
 )
 
 func RegisterEndpoints(e *echo.Echo, uc UseCase) {
@@ -31,9 +32,38 @@ func NewUserHandler(userUseCase UseCase) *userHandler {
 }
 
 func (h *userHandler) Create(c echo.Context) error {
-	return nil
+	var newUser User
+	if err := c.Bind(&newUser); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid input"})
+	}
+
+	rules := []validation.Rule{
+		validation.ValidateRequired("Email", newUser.Email),
+		validation.ValidateEmail("Email", newUser.Email),
+		validation.ValidateRequired("Password", newUser.Password),
+		validation.ValidateLength("Password", newUser.Password, 6, 50),
+	}
+
+	errors := validation.Execute(rules)
+
+	if len(errors) > 0 {
+		var errorMessages []string
+		for _, err := range errors {
+			errorMessages = append(errorMessages, err.Error())
+		}
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"errors": errorMessages,
+		})
+	}
+
+	if err := h.userUseCase.CreateUser(c.Request().Context(), &newUser); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Could not create user"})
+	}
+
+	return c.String(http.StatusCreated, "User created")
 }
 
+// TODO: Implement GetProfile
 func (h *userHandler) GetProfile(c echo.Context) error {
 	return c.String(http.StatusOK, "User profile")
 }
