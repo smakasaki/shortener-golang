@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/smakasaki/shortener/internal/session"
+	"github.com/smakasaki/shortener/internal/url"
 	"github.com/smakasaki/shortener/internal/user"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -69,6 +70,7 @@ func New() (*App, error) {
 			return nil
 		},
 	}))
+	e.Use(middleware.CORS())
 
 	app := &App{
 		Port:   port,
@@ -130,6 +132,11 @@ func (a *App) Run() error {
 	// Initialize user module
 	userUseCase := user.NewUseCase(userRepo)
 	user.RegisterEndpoints(a.Echo, userUseCase, authMiddleware)
+
+	// Initialize URL module
+	urlRepo := url.NewRepository(a.DB)
+	urlUseCase := url.NewUseCase(urlRepo)
+	url.RegisterEndpoints(a.Echo, urlUseCase, authMiddleware)
 
 	a.Echo.GET("/", func(c echo.Context) error {
 		return c.String(200, "Hello, World!")

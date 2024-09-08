@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/smakasaki/shortener/internal/common"
 	"github.com/smakasaki/shortener/internal/session"
 	"github.com/smakasaki/shortener/internal/session/mocks"
 	usermocks "github.com/smakasaki/shortener/internal/user/mocks"
@@ -101,7 +102,7 @@ func TestAuthMiddleware_CheckSession(t *testing.T) {
 
 			if tt.cookieValue != "" {
 				cookie := &http.Cookie{
-					Name:  session.SessionCookieName,
+					Name:  common.SessionCookieName,
 					Value: tt.cookieValue,
 				}
 				req.AddCookie(cookie)

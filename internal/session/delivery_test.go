@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/smakasaki/shortener/internal/common"
 	"github.com/smakasaki/shortener/internal/session"
 	"github.com/smakasaki/shortener/internal/session/mocks"
 	"github.com/stretchr/testify/assert"
@@ -111,7 +112,7 @@ func TestSessionHandler_Delete(t *testing.T) {
 	testCases := []struct {
 		name           string
 		mockSetup      func()
-		session        *session.Session
+		session        *common.Session
 		expectedStatus int
 		expectedBody   map[string]string
 	}{
@@ -120,7 +121,7 @@ func TestSessionHandler_Delete(t *testing.T) {
 			mockSetup: func() {
 				mockUseCase.On("Delete", mock.Anything, sessionID, userID).Return(nil).Once()
 			},
-			session:        &session.Session{ID: sessionID, UserID: userID},
+			session:        &common.Session{ID: sessionID, UserID: userID},
 			expectedStatus: http.StatusOK,
 			expectedBody: map[string]string{
 				"message": "Session deleted",
@@ -131,7 +132,7 @@ func TestSessionHandler_Delete(t *testing.T) {
 			mockSetup: func() {
 				mockUseCase.On("Delete", mock.Anything, sessionID, userID).Return(session.ErrSessionNotFound).Once()
 			},
-			session:        &session.Session{ID: sessionID, UserID: userID},
+			session:        &common.Session{ID: sessionID, UserID: userID},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody: map[string]string{
 				"error": "session not found",
@@ -142,7 +143,7 @@ func TestSessionHandler_Delete(t *testing.T) {
 			mockSetup: func() {
 				mockUseCase.On("Delete", mock.Anything, sessionID, userID).Return(errors.New("delete error")).Once()
 			},
-			session:        &session.Session{ID: sessionID, UserID: userID},
+			session:        &common.Session{ID: sessionID, UserID: userID},
 			expectedStatus: http.StatusBadRequest,
 			expectedBody: map[string]string{
 				"error": "delete error",
@@ -158,7 +159,7 @@ func TestSessionHandler_Delete(t *testing.T) {
 			req := httptest.NewRequest(http.MethodDelete, "/sessions", nil)
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
-			c.Set(session.SessionEchoStorageKey, tt.session)
+			c.Set(common.SessionEchoStorageKey, tt.session)
 
 			tt.mockSetup()
 

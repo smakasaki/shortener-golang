@@ -64,7 +64,12 @@ func (h *userHandler) Create(c echo.Context) error {
 	return c.String(http.StatusCreated, "User created")
 }
 
-// TODO: Implement GetProfile
 func (h *userHandler) GetProfile(c echo.Context) error {
-	return c.String(http.StatusOK, "User profile")
+	userID := c.Get(common.SessionEchoStorageKey).(*common.Session).UserID
+	user, err := h.userUseCase.GetUserByID(c.Request().Context(), userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Could not fetch user"})
+	}
+
+	return c.JSON(http.StatusOK, user)
 }

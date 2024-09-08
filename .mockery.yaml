@@ -10,3 +10,6 @@ packages:
     github.com/smakasaki/shortener/internal/session:
         config:
             all: true
+    github.com/smakasaki/shortener/internal/url:
+        config:
+            all: true

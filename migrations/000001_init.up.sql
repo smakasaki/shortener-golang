@@ -19,9 +19,9 @@ CREATE TABLE sessions (
 
 CREATE TABLE urls (
     id SERIAL PRIMARY KEY,     
-    user_id UUID REFERENCES users(id),       
+    user_id UUID NULL REFERENCES users(id) DEFAULT NULL,       
     original_url TEXT NOT NULL,       
-    short_code VARCHAR(5) NOT NULL, 
+    short_code VARCHAR(62) NOT NULL, 
     click_count INT DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP DEFAULT NULL 
@@ -31,9 +31,9 @@ CREATE UNIQUE INDEX idx_short_code ON urls(short_code);
 
 CREATE TABLE url_clicks (
     id SERIAL PRIMARY KEY,        
-    url_id INT REFERENCES urls(id),
+    url_id INT NOT NULL REFERENCES urls(id),
     ip_address VARCHAR(45),        
     user_agent TEXT,               
-    referer TEXT,                  
+    referer TEXT NULL,                  
     clicked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP 
 );

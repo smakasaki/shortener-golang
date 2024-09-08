@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/smakasaki/shortener/internal/common"
 	"github.com/smakasaki/shortener/internal/user"
 )
 
@@ -22,7 +23,7 @@ func NewAuthMiddleware(sessionRepo Repository, userRepo user.Repository) *authMi
 
 func (m *authMiddleware) CheckSession(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		cookie, err := c.Cookie(SessionCookieName)
+		cookie, err := c.Cookie(common.SessionCookieName)
 		if err != nil {
 			return c.JSON(401, map[string]string{"error": "Unauthorized"})
 		}
@@ -40,7 +41,44 @@ func (m *authMiddleware) CheckSession(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.JSON(401, map[string]string{"error": ErrSessionExpired.Error()})
 		}
 
-		c.Set(SessionEchoStorageKey, session)
+		commonSession := &common.Session{
+			ID:        session.ID,
+			UserID:    session.UserID,
+			CreatedAt: session.CreatedAt,
+		}
+
+		c.Set(common.SessionEchoStorageKey, commonSession)
+		return next(c)
+	}
+}
+
+func (m *authMiddleware) OptionalSession(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		cookie, err := c.Cookie(common.SessionCookieName)
+		if err != nil {
+			return next(c)
+		}
+
+		sessionID, err := uuid.Parse(cookie.Value)
+		if err != nil {
+			return next(c)
+		}
+		session, err := m.sessionRepo.Get(c.Request().Context(), sessionID)
+		if err != nil {
+			return next(c)
+		}
+
+		if time.Since(session.CreatedAt) > 24*time.Hour {
+			return next(c)
+		}
+
+		commonSession := &common.Session{
+			ID:        session.ID,
+			UserID:    session.UserID,
+			CreatedAt: session.CreatedAt,
+		}
+
+		c.Set(common.SessionEchoStorageKey, commonSession)
 		return next(c)
 	}
 }
