@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/joho/godotenv"
-	"github.com/smakasaki/typing-trainer/internal/app"
+	"github.com/smakasaki/shortener/internal/app"
 )
 
 func main() {

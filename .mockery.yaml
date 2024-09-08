@@ -1,0 +1,12 @@
+dir: "{{.InterfaceDir}}/mocks"
+outpkg: "mocks"
+inpackage: false
+with-expecter: true
+recursive: true
+packages:
+    github.com/smakasaki/shortener/internal/user:
+        config:
+            all: true
+    github.com/smakasaki/shortener/internal/session:
+        config:
+            all: true
