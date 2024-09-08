@@ -22,7 +22,7 @@ func NewAuthMiddleware(sessionRepo Repository, userRepo user.Repository) *authMi
 
 func (m *authMiddleware) CheckSession(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		cookie, err := c.Cookie(sessionCookieName)
+		cookie, err := c.Cookie(SessionCookieName)
 		if err != nil {
 			return c.JSON(401, map[string]string{"error": "Unauthorized"})
 		}
@@ -40,7 +40,7 @@ func (m *authMiddleware) CheckSession(next echo.HandlerFunc) echo.HandlerFunc {
 			return c.JSON(401, map[string]string{"error": ErrSessionExpired.Error()})
 		}
 
-		c.Set(sessionEchoStorageKey, session)
+		c.Set(SessionEchoStorageKey, session)
 		return next(c)
 	}
 }

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	sessionCookieName     = "sessionID"
-	sessionEchoStorageKey = "session"
+	SessionCookieName     = "sessionID"
+	SessionEchoStorageKey = "session"
 )
 
 func RegisterEndpoints(e *echo.Echo, sessionUseCase UseCase, authMiddleware common.AuthMiddleware) {
@@ -70,7 +70,7 @@ func (h *sessionHandler) Create(c echo.Context) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:     sessionCookieName,
+		Name:     SessionCookieName,
 		Value:    session.String(),
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
@@ -82,7 +82,7 @@ func (h *sessionHandler) Create(c echo.Context) error {
 }
 
 func (h *sessionHandler) Delete(c echo.Context) error {
-	session := c.Get(sessionEchoStorageKey).(*Session)
+	session := c.Get(SessionEchoStorageKey).(*Session)
 
 	err := h.sessionUseCase.Delete(c.Request().Context(), session.ID, session.UserID)
 	if err != nil {
@@ -90,7 +90,7 @@ func (h *sessionHandler) Delete(c echo.Context) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:     sessionCookieName,
+		Name:     SessionCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
