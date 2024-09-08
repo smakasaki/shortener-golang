@@ -6,13 +6,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/smakasaki/shortener/internal/common"
 	"github.com/smakasaki/shortener/pkg/validation"
 )
 
-func RegisterEndpoints(e *echo.Echo, uc UseCase) {
+func RegisterEndpoints(e *echo.Echo, uc UseCase, authMiddleware common.AuthMiddleware) {
 	h := NewUserHandler(uc)
 	e.POST("/users", h.Create)
-	e.GET("/users/profile", h.GetProfile)
+	e.GET("/users/profile", h.GetProfile, authMiddleware.CheckSession)
 
 }
 

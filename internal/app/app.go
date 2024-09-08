@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/smakasaki/shortener/internal/session"
 	"github.com/smakasaki/shortener/internal/user"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -119,11 +120,16 @@ func connectDB(url string, logger *zap.Logger) (*sql.DB, error) {
 
 func (a *App) Run() error {
 	a.Logger.Info("Starting server", zap.String("port", a.Port), zap.String("env", a.Env))
+	// Initialize session module
+	userRepo := user.NewRepository(a.DB)
+	sessionRepo := session.NewRepository(a.DB)
+	sessionUseCase := session.NewUseCase(sessionRepo, userRepo)
+	authMiddleware := session.NewAuthMiddleware(sessionRepo, userRepo)
+	session.RegisterEndpoints(a.Echo, sessionUseCase, authMiddleware)
 
 	// Initialize user module
-	userRepo := user.NewRepository(a.DB)
 	userUseCase := user.NewUseCase(userRepo)
-	user.RegisterEndpoints(a.Echo, userUseCase)
+	user.RegisterEndpoints(a.Echo, userUseCase, authMiddleware)
 
 	a.Echo.GET("/", func(c echo.Context) error {
 		return c.String(200, "Hello, World!")
