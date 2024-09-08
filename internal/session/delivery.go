@@ -11,11 +11,6 @@ import (
 	"github.com/smakasaki/shortener/pkg/validation"
 )
 
-var (
-	SessionCookieName     = "sessionID"
-	SessionEchoStorageKey = "session"
-)
-
 func RegisterEndpoints(e *echo.Echo, sessionUseCase UseCase, authMiddleware common.AuthMiddleware) {
 	h := NewHandler(sessionUseCase)
 	e.POST("/sessions", h.Create)
@@ -70,7 +65,7 @@ func (h *sessionHandler) Create(c echo.Context) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:     SessionCookieName,
+		Name:     common.SessionCookieName,
 		Value:    session.String(),
 		Path:     "/",
 		Expires:  time.Now().Add(24 * time.Hour),
@@ -82,7 +77,7 @@ func (h *sessionHandler) Create(c echo.Context) error {
 }
 
 func (h *sessionHandler) Delete(c echo.Context) error {
-	session := c.Get(SessionEchoStorageKey).(*Session)
+	session := c.Get(common.SessionEchoStorageKey).(*common.Session)
 
 	err := h.sessionUseCase.Delete(c.Request().Context(), session.ID, session.UserID)
 	if err != nil {
@@ -90,7 +85,7 @@ func (h *sessionHandler) Delete(c echo.Context) error {
 	}
 
 	cookie := &http.Cookie{
-		Name:     SessionCookieName,
+		Name:     common.SessionCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,

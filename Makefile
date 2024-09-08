@@ -59,4 +59,4 @@ clean:
 
 # Запуск тестов
 test:
-	go test ./... -v
+	go test ./...
