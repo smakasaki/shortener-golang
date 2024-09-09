@@ -14,7 +14,7 @@ import (
 func RegisterEndpoints(e *echo.Echo, urlUseCase UseCase, authMiddleware common.AuthMiddleware) {
 	h := NewHandler(urlUseCase)
 	e.GET("/s/:shortCode", h.Redirect)
-	e.GET("/url", h.GetAll, authMiddleware.CheckSession)
+	e.GET("/urls", h.GetAll, authMiddleware.CheckSession)
 	e.POST("/urls", h.Create, authMiddleware.OptionalSession)
 	e.DELETE("/urls/:shortCode", h.Delete, authMiddleware.CheckSession)
 	e.GET("/urls/:shortCode/stats", h.GetStats, authMiddleware.CheckSession)
