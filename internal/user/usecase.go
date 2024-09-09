@@ -7,6 +7,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+//
+
 type Repository interface {
 	CreateUser(ctx context.Context, user *User) error
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
