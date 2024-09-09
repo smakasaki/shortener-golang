@@ -14,7 +14,7 @@ func main() {
 		log.Printf("No .env file found, proceeding with system environment variables")
 	}
 
-	// Инициализируем приложение
+	//  Инициализируем приложение
 	application, err := app.New()
 	if err != nil {
 		log.Fatalf("Failed to initialize the app: %v", err)
