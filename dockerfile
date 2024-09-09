@@ -17,6 +17,7 @@ FROM scratch
 WORKDIR /app
 
 COPY --from=builder /build/shortener .
+COPY --from=builder /build/migrations ./migrations
 
 EXPOSE 8080
 

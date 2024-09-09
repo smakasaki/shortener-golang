@@ -35,6 +35,18 @@ jobs:
             - name: Run tests
               run: go test -v ./...
 
+            # Запуск тестовой базы данных PostgreSQL
+            - name: Start PostgreSQL container
+              run: |
+                  docker run --name test-postgres -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=testdb -d postgres:15
+                  sleep 10
+
+            # Выполнение миграций на тестовой базе
+            - name: Run database migrations
+              run: |
+                  docker run --rm -v $(pwd)/migrations:/migrations --network host migrate/migrate \
+                    -path=/migrations -database postgres://test:test@localhost:5432/testdb?sslmode=disable up
+
             - name: Login to Docker Hub
               uses: docker/login-action@v3
               with:
@@ -52,6 +64,11 @@ jobs:
                   push: true
                   tags: ${{ secrets.DOCKERHUB_USERNAME }}/go-shortener:latest
 
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+
+        steps:
             - name: Deploy to VPS via SSH
               uses: appleboy/ssh-action@v1.0.3
               with:
@@ -60,5 +77,21 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   port: ${{ secrets.SSH_PORT }}
                   script: |
-                      whoami
-                      ls -al
+                      # Загружаем переменные окружения из .env файла
+                      cd app
+                      set -o allexport
+                      source .env
+                      set -o allexport
+
+                       # Остановить только backend контейнер
+                      docker-compose stop backend
+
+                      # Выкачать новый образ для backend
+                      docker-compose pull backend
+
+                      # Запустить миграции
+                      docker run --rm --network host -v /path/to/migrations:/migrations smakasaki/go-shortener \
+                        migrate -path=/migrations -database $DB_URL up
+
+                      # Перезапустить только backend
+                      docker-compose up -d backend
