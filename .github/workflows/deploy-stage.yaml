@@ -78,4 +78,4 @@ jobs:
                   port: ${{ secrets.SSH_PORT }}
                   script: |
                       cd ~/app
-                      ./deploy.sh
+                      ./deploy-backend.sh
