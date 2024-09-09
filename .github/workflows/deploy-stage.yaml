@@ -77,24 +77,5 @@ jobs:
                   key: ${{ secrets.SSH_PRIVATE_KEY }}
                   port: ${{ secrets.SSH_PORT }}
                   script: |
-                      # Загружаем переменные окружения из .env файла
-                      cd app
-                      set -o allexport
-                      source .env || echo ".env file not found"
-                      set +o allexport
-
-                      # Проверка, установилась ли переменная DATABASE_URL
-                      echo "Database URL: $DATABASE_URL"
-
-                      # Остановить только backend контейнер
-                      docker-compose stop backend
-
-                      # Выкачать новый образ для backend
-                      docker-compose pull backend
-
-                      # Запустить миграции
-                      docker run --rm --network host -v /path/to/migrations:/migrations smakasaki/go-shortener \
-                        migrate -path=/migrations -database $DATABASE_URL up
-
-                      # Перезапустить только backend
-                      docker-compose up -d backend
+                      cd ~/app
+                      ./deploy.sh
